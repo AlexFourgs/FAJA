@@ -7,6 +7,7 @@ using namespace std;
 int main(){
 	
 	int i=0;
+	SDL_JoystickEventState(SDL_ENABLE);
 	
 printf("Programme de configuration du Joystick\n\n *******************\n\n\n"); 
     if(SDL_Init(SDL_INIT_JOYSTICK) < 0) // initialise juste le joystick (pas besoin d'une fenêtre pour nos tests)
@@ -25,68 +26,14 @@ return 1;
 
 }
 
-    SDL_Joystick *joystick; // attention, c'est bien un pointeur !
-	joystick = SDL_JoystickOpen(0); // prend en paramètre le numéro du joystick, ici 0
-    printf("Le Joystick possède :\nBoutons : %d \nAxes : %d\n Chapeaux :%d \nTrackballs %d\n",SDL_JoystickNumButtons(joystick),SDL_JoystickNumAxes(joystick),SDL_JoystickNumHats(joystick),SDL_JoystickNumBalls(joystick));
+    SDL_Joystick *pJoystick; // attention, c'est bien un pointeur !
+	pJoystick = SDL_JoystickOpen(0); // prend en paramètre le numéro du joystick, ici 0
+    printf("Le Joystick possède :\nBoutons : %d \nAxes : %d\n Chapeaux :%d \nTrackballs %d\n"
+    ,SDL_JoystickNumButtons(pJoystick),SDL_JoystickNumAxes(pJoystick),SDL_JoystickNumHats(pJoystick)
+    ,SDL_JoystickNumBalls(pJoystick));
 
-	
-	
-	switch(evenements.type)
-{
-    case SDL_JOYHATMOTION:
-        switch(evenements.jhat.which)
-        {
-            case 0:
-                switch(evenements.jhat.hat)
-                {
-                    case 0:
-                        switch(evenements.jhat.value)
-                        {
-                            case SDL_HAT_UP:
-                                avancerPerso(&perso1,HAUT);
-                                break;
-                            case SDL_HAT_DOWN:
-                                avancerPerso(&perso1,BAS);
-                                break;
-                            case SDL_HAT_RIGHT:
-                                avancerPerso(&perso1,DROITE);
-                                break;
-                            case SDL_HAT_LEFT:
-                                avancerPerso(&perso1,GAUCHE);
-                                break;
-                        }
-                    break;    
-                }
-                break;
-  
-            case 1:
-                switch(evenements.jhat.hat)
-                {
-                    case 0:
-                        switch(evenements.jhat.value)
-                        {
-                            case SDL_HAT_UP:
-                                avancerPerso(&perso2,HAUT);
-                                break;
-                            case SDL_HAT_DOWN:
-                                avancerPerso(&perso2,BAS);
-                                break;
-                            case SDL_HAT_RIGHT:
-                                avancerPerso(&perso2,DROITE);
-                                break;
-                            case SDL_HAT_LEFT:
-                                avancerPerso(&perso2,GAUCHE);
-                                break;
-                        }
-                        break;    
-                }
-                break;
-            }
-            break;  
-        }
 
-	
     SDL_Quit();
- 
+
   return 0;
 }
