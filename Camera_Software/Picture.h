@@ -22,7 +22,10 @@
 
 #define COEFFICIENT_MAX 4
 
+<<<<<<< HEAD
 // Structure correspondant aux coordonnées du barycentre.
+=======
+>>>>>>> 2491c06b0fc0de143553331a72b1ed7e1f62756f
 typedef struct Barycenter Barycenter;
 struct Barycenter{
 	int x ;
@@ -30,7 +33,10 @@ struct Barycenter{
 };
 
 // Structure contenant les valeurs de la couleur que l'on veut tracker et l'image.
+<<<<<<< HEAD
 // A changer en hsv.
+=======
+>>>>>>> 2491c06b0fc0de143553331a72b1ed7e1f62756f
 typedef struct Color_pixel Color_pixel;
 struct Color_pixel{
 	uchar r;
@@ -39,7 +45,10 @@ struct Color_pixel{
 	IplImage* cam ;
 };
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2491c06b0fc0de143553331a72b1ed7e1f62756f
 void mouseEvent(int evt, int x, int y, int flags, void* param);
 int colorTracking (IplImage* cap, Color_pixel color, int i, uchar pixel_blue, uchar pixel_green, uchar pixel_red);
 Barycenter barycenterCalculation (int *barycenter_x, int *barycenter_y, int size_x, int size_y, int coefficient, int* isVisible);
