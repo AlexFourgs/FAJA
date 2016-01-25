@@ -1,5 +1,6 @@
 #include "Picture.h"
 
+// Thread à retirer ?
 void* waitSecond(void* end_void){
 	int* end = (int*) end_void;
 	sleep(10);
@@ -7,11 +8,16 @@ void* waitSecond(void* end_void){
 	pthread_exit(NULL);
 }
 
-// Fonction lié au clic. Renvoi la position du pixel et sa couleur.
+
+/**
+
+	Fonction OpenCV pour le clic. Met les valeurs (couleur) du pixel dans une structure Color_pixel.
+
+**/
 void mouseEvent(int evt, int x, int y, int flags, void* param) {
 	Color_pixel* color = (Color_pixel*) param ;
 
-	// On récupére la couleur du pixel sur lequel on clique.
+	// On récupére la couleur du pixel sur lequel on clique et on l'ajoute à la structure color.
 	if(evt==CV_EVENT_LBUTTONDOWN) {
 		color->r = color->cam->imageData[((x*3)+(y*color->cam->widthStep))+2] ;
 		color->g = color->cam->imageData[((x*3)+(y*color->cam->widthStep))+1] ;
@@ -23,6 +29,13 @@ void mouseEvent(int evt, int x, int y, int flags, void* param) {
 
 }
 
+
+/**
+
+	Fonction de tracking.
+	Si le pixel est de la couleur que l'on veut + une tolerence, on le met en rouge.
+
+**/
 int colorTracking (IplImage* cap, Color_pixel color, int i, uchar pixel_blue, uchar pixel_green, uchar pixel_red) {
 
 	// Si les pixels sont de la couleur on les met en rouge.
@@ -39,6 +52,11 @@ int colorTracking (IplImage* cap, Color_pixel color, int i, uchar pixel_blue, uc
 	return 0 ;
 }
 
+/**
+
+	Fonction qui calcule le barycentre.
+
+**/
 Barycenter barycenterCalculation (int *barycenter_x, int *barycenter_y, int size_x, int size_y, int coefficient, int* isVisible) {
 	Barycenter coordonnees ;
 	coordonnees.x = coordonnees.y = 0 ;
@@ -73,6 +91,14 @@ Barycenter barycenterCalculation (int *barycenter_x, int *barycenter_y, int size
 	return coordonnees ;
 }
 
+
+/**
+
+	Fonction qui capture l'image à partir de la caméra, fait le tracking des pixels et calcule le
+	barycentre.
+	Adapter au HSV et C++. Multi tracking ?
+
+**/
 void* launch_picture(void* info_void) {
 	Info* info = (Info*) info_void;
 	CvPoint center;
@@ -124,8 +150,11 @@ void* launch_picture(void* info_void) {
 	uchar pixel_green ;
 	uchar pixel_red ;
 
-	// On alloue la mémoire pour nos tableaux de calcul du barycentre
+	// On capture UNE image de la webcam pour pouvoir connaitre les informations de capture.
 	cap = cvQueryFrame(capture);
+
+
+	// Ajout des informations sur la capture dans la structure info.
 	int sizeXCam = cap->width;
 	int sizeYCam = cap->height;
 	info->sizeX = &sizeXCam;
@@ -138,12 +167,11 @@ void* launch_picture(void* info_void) {
 	int inSmallMinY = ((*info->sizeY/2) - ((*info->sizeY/2)/COEFFICIENT_MAX));
 	int inSmallMaxY = ((*info->sizeY/2) + ((*info->sizeY/2)/COEFFICIENT_MAX));
 
-	/*barycenter_x = calloc(cap->width, sizeof(int));
-	barycenter_y = calloc(cap->height, sizeof(int));*/
 
-	// Variable certif
+	// Variable certif nb images traitées
 	//int click = 0 ;
 	int nbImage = 0 ;
+
 	// Tant qu'on appuie pas sur q le on continu la boucle.
 	key = cvWaitKey(1);
 	while ((key != 'q') && (key != 'Q') && (*info->isEnd == 0)){
@@ -155,6 +183,8 @@ void* launch_picture(void* info_void) {
 			color.b = 0 ;
 			*info->reset = 1;
 		}
+
+		// On alloue la mémoire pour nos tableaux de calcul du barycentre
 		barycenter_x = calloc(cap->width/coefficient, sizeof(int));
 		barycenter_y = calloc(cap->height/coefficient, sizeof(int));
 
@@ -163,6 +193,7 @@ void* launch_picture(void* info_void) {
 		cap = cvQueryFrame(capture);
 
 		// Si on traite en BGR
+		// On met la matrice de l'image dans la structure color.
 		color.cam = cap ;
 
 
@@ -171,20 +202,22 @@ void* launch_picture(void* info_void) {
 		int widthMax = ((*info->sizeX/2) + ((*info->sizeX/2)/coefficient));
 		int heightMin = ((*info->sizeY/2) - ((*info->sizeY/2)/coefficient));
 		int heightMax = ((*info->sizeY/2) + ((*info->sizeY/2)/coefficient));
+
 		for (i = widthMin; i < widthMax; i++) {
 			for (j = heightMin; j < heightMax; j++) {
 
 				// Pixels B,G,R en fonction de la position.
-				pixel_blue = (uchar)(cap->imageData[((i*3)+(j*cap->widthStep))]) ;
-				pixel_green = (uchar)(cap->imageData[((i*3)+(j*cap->widthStep))+1]) ;
-				pixel_red = (uchar)(cap->imageData[((i*3)+(j*cap->widthStep))+2]) ;
+				pixel_blue = (uchar)(cap->imageData[((i*3)+(j*cap->widthStep))]) ; // H
+				pixel_green = (uchar)(cap->imageData[((i*3)+(j*cap->widthStep))+1]) ; // S
+				pixel_red = (uchar)(cap->imageData[((i*3)+(j*cap->widthStep))+2]) ; // V
 
 				// Tracking des pixels en fonction de la couleur.
 				if(colorTracking(cap, color, ((i*3)+(j*cap->widthStep)), pixel_blue, pixel_green, pixel_red)){
 					//printf("y = %d, x = %d\n", i/((cap->width)*3), i%((cap->width)*3));
 					//printf("x = %d, y = %d\n", i/3, j);
-					barycenter_y[j-heightMin]++ ;
 
+					// Remplissage des tableaux de barycentre.
+					barycenter_y[j-heightMin]++ ;
 					barycenter_x[i-widthMin]++ ;
 				}
 			}
@@ -195,6 +228,8 @@ void* launch_picture(void* info_void) {
 
 		/*printf("barycentre x main = %d, barycentre y main = %d\n", barycentre_coordonnees.x,
 		barycentre_coordonnees.y);*/
+
+		// Ajout d'un point sur l'image aux coordonnées du barycentre.
 		CvPoint p;
 		//printf("Barycentre update\n");
 		p.x = barycentre_coordonnees.x ;
@@ -203,6 +238,7 @@ void* launch_picture(void* info_void) {
 		*info->y = barycentre_coordonnees.y;
 
 		cvCircle(cap, p, 5, CV_RGB(0,0,255), -1, 8, 0);
+
 		#ifdef DEBUG
 			cvCircle(cap, center, TOLERANCE_CENTRE, CV_RGB(0,255,0), -1, 8, 0);
 		#else
