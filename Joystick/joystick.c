@@ -1,5 +1,13 @@
-// sdl-jstest - Joystick Test Program for SDL
-// Copyright (C) 2007 Ingo Ruhnke <grumbel@gmail.com>
+// Progamme de contrôle du servomoteur avec Joystick à l'aide de la librarie SDL 
+//
+// Inspiré du code de Ingo Runke 2007, sdl-jstest. 
+//
+// Ce programme nécessite les librairies : SDL 1, ncurses.
+//
+// Compilation : gcc -Wall -c "%f" -lSDL -lncurses -std=c99 -std=gnu99
+// Construction : gcc -Wall -o "%e" "%f" -lSDL -lncurses -std=c99 -std=gnu99 
+//
+// Remplacer %e et %f par les noms des fichiers que vous souhaitez compiler. Ces variables sont pour l'IDE Geany.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -24,6 +32,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
+// Fonction d'affichage dynamique sur terminal
 void print_bar(int pos, int len)
 {
   addch('[');
@@ -36,15 +46,16 @@ void print_bar(int pos, int len)
   }
   addch(']');
 }
+// Fonction d'affichage dynamique sur terminal
 
 int str2int(const char* str, int* val)
 {
   char* endptr;
-  errno = 0;    /* To distinguish success/failure after call */
+  errno = 0;    /* Pour distringuer les reussites/echec après l'appel */
 
   *val = strtol(str, &endptr, 10);
 
-  /* Check for various possible errors */
+  /* On check les erreurs éventuelles*/
   if ((errno == ERANGE && (*val == LONG_MAX || *val == LONG_MIN))
       || (errno != 0 && *val == 0)) {
     return 0;
@@ -57,73 +68,20 @@ int str2int(const char* str, int* val)
   return 1;
 }
 
+//On affiche les informations du Joysticks
 void print_joystick_info(int joy_idx, SDL_Joystick* joy)
 {
-  printf("Joystick Name:     '%s'\n", SDL_JoystickName(joy_idx));
-  printf("Joystick Number:   %2d\n", joy_idx);
-  printf("Number of Axes:    %2d\n", SDL_JoystickNumAxes(joy));
-  printf("Number of Buttons: %2d\n", SDL_JoystickNumButtons(joy));
-  printf("Number of Hats:    %2d\n", SDL_JoystickNumHats(joy));
-  printf("Number of Balls:   %2d\n", SDL_JoystickNumBalls(joy));
+  printf("Nom du Joystick:     '%s'\n", SDL_JoystickName(joy_idx));
+  printf("Numéro du Joystick:   %2d\n", joy_idx);
+  printf("Nombre d'axes :    %2d\n", SDL_JoystickNumAxes(joy));
+  printf("Nombre de bouttons : %2d\n", SDL_JoystickNumButtons(joy));
+  printf("Nombre de chapeaux :    %2d\n", SDL_JoystickNumHats(joy));
+  printf("Nombre de boules :   %2d\n", SDL_JoystickNumBalls(joy));
   printf("\n");
 }
 
-void print_help(const char* prg)
-{
-  printf("Usage: %s [OPTION]\n", prg);
-  printf("List available joysticks or test a  joystick.\n");
-  printf("This programm uses SDL for doing its test instead of using the raw\n"
-         "/dev/input/jsX interface\n");
-  printf("\n");
-  printf("Options:\n");
-  printf("  --help             Print this help\n");
-  printf("  --version          Print version number and exit\n");
-  printf("  --list             Search for available joysticks and list their properties\n");
-  printf("  --test  JOYNUM     Display a graphical representation of the current joystick state\n");
-  printf("  --event JOYNUM     Display the events that are recieved from the joystick\n");
-  printf("\n");
-  printf("Examples:\n");
-  printf("  %s --list\n", prg);
-  printf("  %s --test 1\n", prg);
-}
-
-int main()
-{
-int choix=1;
-  // FIXME: We don't need video, but without it SDL will fail to work in SDL_WaitEvent()
-  if(SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
-  {
-    fprintf(stderr, "Unable to init SDL: %s\n", SDL_GetError());
-        atexit(SDL_Quit);
-
-    exit(1);
-  }
-  
-  if(choix==1){
-      int num_joysticks = SDL_NumJoysticks();
-      if (num_joysticks == 0)
-      {
-        printf("No joysticks were found\n");
-        atexit(SDL_Quit);
-        exit(2);
-      }
-      else
-      {
-        printf("Found %d joystick(s)\n\n", num_joysticks);
-      }
-    
-      int joy_idx=0;
-
-      SDL_Joystick* joy = SDL_JoystickOpen(joy_idx);
-      if (!joy)
-      {
-        fprintf(stderr, "Unable to open joystick %d\n", joy_idx);
-        atexit(SDL_Quit);
-        exit(3);
-      }
-      else
-      {
-        initscr();
+void graphicalJoystick(int joy_idx, SDL_Joystick *joy, FILE* fichierKernel){
+initscr();
 
         //cbreak();
         //noecho();
@@ -131,15 +89,13 @@ int choix=1;
         curs_set(0);
 
 
-        int num_axes    = SDL_JoystickNumAxes(joy);
+        int num_axes    = SDL_JoystickNumAxes(joy) -1;
         int num_buttons = SDL_JoystickNumButtons(joy);
         int num_hats    = SDL_JoystickNumHats(joy);
-        int num_balls   = SDL_JoystickNumBalls(joy);
 
         Sint16* axes    = calloc(num_axes,    sizeof(Sint16));
         Uint8*  buttons = calloc(num_buttons, sizeof(Uint8));
         Uint8*  hats    = calloc(num_hats,    sizeof(Uint8));
-        Uint8*  balls   = calloc(num_balls,   2*sizeof(Sint16));
 
         int quit = 0;
         SDL_Event event;
@@ -153,8 +109,17 @@ int choix=1;
             switch(event.type)
             {
               case SDL_JOYAXISMOTION:
-                assert(event.jaxis.axis < num_axes);
+                   if(event.jaxis.value<0){
+                fprintf(fichierKernel, "P1-12=100% \n");
+			}
+			else if(event.jaxis.value>0){
+			fprintf(fichierKernel, "P1-12=-100% \n");
+			}
+                assert(event.jaxis.axis < num_axes+1);
                 axes[event.jaxis.axis] = event.jaxis.value;
+           
+                      //printf("SDL_JOYAXISMOTION: joystick: %d axis: %d value: %d\n",
+                    // event.jaxis.which, event.jaxis.axis, event.jaxis.value);
                 break;
 
               case SDL_JOYBUTTONDOWN:
@@ -166,12 +131,6 @@ int choix=1;
               case SDL_JOYHATMOTION:
                 assert(event.jhat.hat < num_hats);
                 hats[event.jhat.hat] = event.jhat.value;
-                break;
-
-              case SDL_JOYBALLMOTION:
-                assert(event.jball.ball < num_balls);
-                balls[2*event.jball.ball + 0] = event.jball.xrel;
-                balls[2*event.jball.ball + 1] = event.jball.yrel;
                 break;
 
               case SDL_QUIT:
@@ -192,6 +151,9 @@ int choix=1;
 
             printw("Joystick Name:   '%s'\n", SDL_JoystickName(joy_idx));
             printw("Joystick Number: %d\n", joy_idx);
+			printw("Nombre d'axes :    %2d\n", SDL_JoystickNumAxes(joy));
+			printw("Nombre de boutons : %2d\n", SDL_JoystickNumButtons(joy));
+			printw("Nombre de chapeaux :    %2d\n", SDL_JoystickNumHats(joy));
             printw("\n");
 
             printw("Axes %2d:\n", num_axes);
@@ -204,7 +166,7 @@ int choix=1;
             }
             printw("\n");
 
-            printw("Buttons %2d:\n", num_buttons);
+            printw("Boutons %2d:\n", num_buttons);
             for(int i = 0; i < num_buttons; ++i)
             {
               printw("  %2d: %d  %s\n", i, buttons[i], buttons[i] ? "[#]":"[ ]");
@@ -214,7 +176,7 @@ int choix=1;
             printw("Hats %2d:\n", num_hats);
             for(int i = 0; i < num_hats; ++i)
             {
-              printw("  %2d: value: %d\n", i, hats[i]);
+              printw("  %2d: valeurs: %d\n", i, hats[i]);
               printw("  +-----+  up:    %c\n"
                      "  |%c %c %c|  down:  %c\n"
                      "  |%c %c %c|  left:  %c\n"
@@ -242,21 +204,9 @@ int choix=1;
                      (hats[i] & SDL_HAT_RIGHT)?'1':'0');
             }
             printw("\n");
-
-            printw("Balls %2d: ", num_balls);
-            for(int i = 0; i < num_balls; ++i)
-            {
-              printw("  %2d: %6d %6d\n", i, balls[2*i+0], balls[2*i+1]);
-            }
-            printw("\n");
-            printw("\n");
-            printw("Press Ctrl-c to exit\n");
-
             refresh();
           }
         } // while
-
-        free(balls);
         free(hats);
         free(buttons);
         free(axes);
@@ -264,25 +214,18 @@ int choix=1;
         endwin();
       }
       
-    }  
-      
-      
-      
-    
-    else if (choix == 3 )
-    {
-      int joy_idx=0;
-
+void listJoystick(int joy_idx, FILE* fichierKernel){
+	
       SDL_Joystick* joy = SDL_JoystickOpen(joy_idx);
       if (!joy)
       {
-        fprintf(stderr, "Unable to open joystick %d\n", joy_idx);
+        fprintf(stderr, "Impossible d'ouvrir le Joystick numéro :  %d\n", joy_idx);
       }
       else
       {
         print_joystick_info(joy_idx, joy);
 
-        printf("Entering joystick test loop, press Ctrl-c to exit\n");
+        printf("Appuyer sur Ctrl + C pour quitter\n");
         int quit = 0;
         SDL_Event event;
 
@@ -316,21 +259,70 @@ int choix=1;
 
             case SDL_QUIT:
               quit = 1;
-              printf("Recieved interrupt, exiting\n");
+              printf("Signal d'intéruption reçu, je me ferme.\n");
               break;
 
             default:
-              fprintf(stderr, "Error: Unhandled event type: %d\n", event.type);
+              fprintf(stderr, "Erreur : je ne connais pas l'évènements : %d\n", event.type);
               break;
           }
         }
         SDL_JoystickClose(joy);
 
       }
-      fprintf(stderr, "Unable to init SDL: %s\n", SDL_GetError());
+      fprintf(stderr, "Impossible d'initaliser la SDL : %s\n", SDL_GetError());
     }
 
+
+
+int main()
+{
+	
+int choix=1;
+
+
+  // FIXME: We don't need video, but without it SDL will fail to work in SDL_WaitEvent()
+  if(SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
+  {
+    fprintf(stderr, "Impossible d'initaliser la SDL %s\n", SDL_GetError());
+        atexit(SDL_Quit);
+
+    exit(1);
+  }
   
+  
+  FILE *fichierKernel;
+    fichierKernel = fopen("/dev/servoblaster", "a");
+    if (fichierKernel == NULL) {
+        printf("Erreur : Je n'arrive pas à ouvrir le fichierKernel. (/dev/servoblaster)\n");
+        exit(0); 
+    }   
+    
+         int num_joysticks = SDL_NumJoysticks();
+      if (num_joysticks == 0)
+      {
+        printf("Aucun Joystick trouvé.\n");
+        atexit(SDL_Quit);
+        exit(2);
+      }
+      else
+      {
+        printf("J'ai trouvé %d joystick(s).\n\n", num_joysticks);
+      }
+    
+      int joy_idx=0;
+
+      SDL_Joystick* joy = SDL_JoystickOpen(joy_idx);
+      if (!joy)
+      {
+        fprintf(stderr, "je ne parviens pas à ouvrir le joystick :  %d\n", joy_idx);
+        atexit(SDL_Quit);
+        exit(3);
+      }
+  
+  
+  if(choix==1) graphicalJoystick(joy_idx,joy,fichierKernel);
+  else if (choix == 3 ) listJoystick(joy_idx,fichierKernel);
 }
 
 /* EOF */
