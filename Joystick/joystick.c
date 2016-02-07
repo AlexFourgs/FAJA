@@ -87,7 +87,7 @@ initscr();
         //noecho();
         //nonl();
         curs_set(0);
-
+		int angle=50;
 
         int num_axes    = SDL_JoystickNumAxes(joy) -1;
         int num_buttons = SDL_JoystickNumButtons(joy);
@@ -109,11 +109,17 @@ initscr();
             switch(event.type)
             {
               case SDL_JOYAXISMOTION:
-                   if(event.jaxis.value<0){
-                fprintf(fichierKernel, "P1-12=100% \n");
-			}
-			else if(event.jaxis.value>0){
-			fprintf(fichierKernel, "P1-12=-100% \n");
+                   if(event.jaxis.value<0 && event.jaxis.axis==0){
+					   angle--;
+                fprintf(fichierKernel,"1=%i\n",(int)angle);
+                printf("echo 1=%i > /dev/servoblaster\n", (int) angle);
+                fflush(fichierKernel);	
+                		}
+			else if(event.jaxis.value>0 && event.jaxis.axis==0){
+				angle++;
+			    fprintf(fichierKernel,"1=%i\n",(int)angle);
+                printf("echo 1=%i > /dev/servoblaster\n", (int) angle);
+                fflush(fichierKernel);
 			}
                 assert(event.jaxis.axis < num_axes+1);
                 axes[event.jaxis.axis] = event.jaxis.value;
