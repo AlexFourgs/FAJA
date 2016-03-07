@@ -87,8 +87,7 @@ initscr();
         //noecho();
         //nonl();
         curs_set(0);
-
-
+        
         int num_axes    = SDL_JoystickNumAxes(joy) -1;
         int num_buttons = SDL_JoystickNumButtons(joy);
         int num_hats    = SDL_JoystickNumHats(joy);
@@ -96,7 +95,15 @@ initscr();
         Sint16* axes    = calloc(num_axes,    sizeof(Sint16));
         Uint8*  buttons = calloc(num_buttons, sizeof(Uint8));
         Uint8*  hats    = calloc(num_hats,    sizeof(Uint8));
+FILE* f = NULL;
 
+        f=fopen("/dev/servoblaster", "w");
+        if (f == NULL)
+          exit(1);
+float angleY,angleX = 50;
+                fprintf(f,"1=%i\n",(int)angleY);
+                fprintf(f,"2=%i\n",(int)angleX);
+                fflush(f);	
         int quit = 0;
         SDL_Event event;
         while(!quit)
@@ -109,12 +116,6 @@ initscr();
             switch(event.type)
             {
               case SDL_JOYAXISMOTION:
-                   if(event.jaxis.value<0){
-                fprintf(fichierKernel, "P1-12=100% \n");
-			}
-			else if(event.jaxis.value>0){
-			fprintf(fichierKernel, "P1-12=-100% \n");
-			}
                 assert(event.jaxis.axis < num_axes+1);
                 axes[event.jaxis.axis] = event.jaxis.value;
            
@@ -143,7 +144,78 @@ initscr();
                 break;
             }
           }
-
+     		if(angleY>240){
+				angleY=240;
+			}
+			else if(angleY<50){
+				angleY=50;
+			}
+			if(angleX>240){
+				angleX=240;
+			}
+			else if(angleX<50){
+				angleX=50;
+			}
+			  
+			 if(axes[0]<0){
+				 
+				 if(axes[0]<0 && axes[0] > -10000){
+				 angleY--;
+				 }
+				else if (axes[0]< -10000 && axes[0]>-20000){
+				angleY=angleY-2;
+				}
+				else if(axes[0] < -20000 && axes[0] > -40000){
+				angleY=angleY-3;
+				} 
+                fprintf(f,"1=%i\n",(int)angleY);
+                //printf("echo 1=%i > /dev/servoblaster\n", (int) angleY);
+                fflush(f);
+                		}
+			else if(axes[0]>0){
+				
+				if(axes[0]>0 && axes[0]<10000){
+								angleY++;
+				}
+				else if (axes[0]>10000 && axes[0]<20000){
+				angleY=angleY+2;
+				}
+				else if (axes[0]>20000 && axes[0]<40000){
+				angleY=angleY+3;
+				}
+			    fprintf(f,"1=%i\n",(int)angleY);
+			                    fflush(f);
+			    }
+			    
+			    
+			     if(axes[1]<0){
+				 
+				 if(axes[1]<0 && axes[1] > -10000){
+				 angleX--;
+				 }
+				else if (axes[1]< -10000 && axes[1]>-20000){
+				angleX=angleX-2;
+				}
+				else if(axes[1] < -20000 && axes[1] > -40000){
+				angleX=angleX-3;
+				} 
+                fprintf(f,"2=%i\n",(int)angleX);
+                fflush(f);
+                		}
+			else if(axes[1]>0){
+				
+				if(axes[1]>0 && axes[1]<10000){
+								angleX++;
+				}
+				else if (axes[1]>10000 && axes[1]<20000){
+				angleX=angleX+2;
+				}
+				else if (axes[1]>20000 && axes[1]<40000){
+				angleX=angleX+3;
+				}
+			    fprintf(f,"2=%i\n",(int)angleX);
+			                    fflush(f);
+			    }
           if (something_new)
           {
             //clear();
