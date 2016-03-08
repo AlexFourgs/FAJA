@@ -4,7 +4,8 @@
 #include <cv.h>
 #include <time.h>
 
-// Ligne de compilation : gcc -o cam testCam.c `pkg-config --cflags opencv --libs opencv` -ldl -lm
+// Ligne de compilation : gcc -o cam testCam.c 
+
 
 typedef struct {
 	int x ;

@@ -144,7 +144,7 @@ float angleY,angleX = 50;
                 break;
             }
           }
-     		if(angleY>240){
+     		/*if(angleY>240){
 				angleY=240;
 			}
 			else if(angleY<50){
@@ -215,10 +215,21 @@ float angleY,angleX = 50;
 				}
 			    fprintf(f,"2=%i\n",(int)angleX);
 			                    fflush(f);
-			    }
+			    }*/
           if (something_new)
           {
             //clear();
+            
+            res = 50+(((-1 * (axes[0])+32768)*190)/65535);
+                fprintf(f,"1=%i\n",(int)res);
+                printf("echo 1=%i > /dev/servoblaster\n", (int) res);
+                fflush(f);
+
+                res = 50+(((-1 * (axes[1])+32768)*190)/65535);
+                fprintf(f,"0=%i\n", (int)res);
+                printf("echo 0=%i > /dev/servoblaster\n", (int) res);
+                fflush(f);
+            
             move(0,0);
 
             printw("Joystick Name:   '%s'\n", SDL_JoystickName(joy_idx));
