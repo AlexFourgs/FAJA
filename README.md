@@ -2,4 +2,4 @@
 
 Tourelle défenssive et intelligente
 
-#Arya J. & Alex F.
+#Aryus. & Alex F.
